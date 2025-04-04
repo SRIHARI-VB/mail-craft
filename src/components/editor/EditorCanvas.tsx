@@ -813,22 +813,36 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
       reader.onload = (e) => {
         const imageDataUrl = e.target?.result as string;
 
-        // Update the element with the image data URL
-        const newElements = elements.map((el) => {
-          if (el.id === id) {
-            return {
-              ...el,
-              content: imageDataUrl,
-              style: {
-                ...el.style,
-                width: "auto",
-                "max-width": "100%",
-                height: "auto",
-              },
-            };
-          }
-          return el;
-        });
+        // Recursive function to update elements at any level of nesting
+        const updateElements = (elements: EmailElement[]): EmailElement[] => {
+          return elements.map((el) => {
+            if (el.id === id) {
+              return {
+                ...el,
+                content: imageDataUrl,
+                style: {
+                  ...el.style,
+                  width: "auto",
+                  "max-width": "100%",
+                  height: "auto",
+                },
+              };
+            }
+
+            // If element has children, recursively search and update them
+            if (el.children && el.children.length > 0) {
+              return {
+                ...el,
+                children: updateElements(el.children),
+              };
+            }
+
+            return el;
+          });
+        };
+
+        // Apply the recursive update function
+        const newElements = updateElements(elements);
 
         onUpdateElements(newElements);
         toast.success("Image uploaded");
