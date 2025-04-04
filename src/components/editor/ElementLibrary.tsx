@@ -1,14 +1,18 @@
-
 import React from "react";
-import { 
-  Type, 
-  Image, 
+import {
+  Type,
+  Image,
   Square,
-  SeparatorHorizontal, 
-  Layout, 
+  SeparatorHorizontal,
+  Layout,
   LayoutGrid,
   Text,
-  Heading
+  Heading,
+  Columns,
+  Grid3X3,
+  Share2,
+  CreditCard,
+  AlertCircle,
 } from "lucide-react";
 import { ElementType } from "@/types/editor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,22 +22,29 @@ interface ElementLibraryProps {
   onElementDragStart: (type: ElementType) => (event: React.DragEvent) => void;
 }
 
-const ElementLibrary: React.FC<ElementLibraryProps> = ({ onElementDragStart }) => {
+const ElementLibrary: React.FC<ElementLibraryProps> = ({
+  onElementDragStart,
+}) => {
   return (
     <div className="bg-card border rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
       <div className="p-4 border-b">
         <h3 className="font-medium">Elements</h3>
-        <p className="text-sm text-muted-foreground">Drag elements to the editor</p>
+        <p className="text-sm text-muted-foreground">
+          Drag elements to the editor
+        </p>
       </div>
-      
+
       <Tabs defaultValue="basic" className="w-full flex-1 flex flex-col">
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="basic">Basic</TabsTrigger>
           <TabsTrigger value="layout">Layout</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="basic" className="p-4 space-y-2 flex-1 overflow-auto">
+
+        <TabsContent
+          value="basic"
+          className="p-4 space-y-2 flex-1 overflow-auto"
+        >
           <LibraryItem
             type="heading"
             icon={<Heading className="h-5 w-5" />}
@@ -47,7 +58,7 @@ const ElementLibrary: React.FC<ElementLibraryProps> = ({ onElementDragStart }) =
             onDragStart={onElementDragStart("text")}
           />
           <LibraryItem
-            type="image" 
+            type="image"
             icon={<Image className="h-5 w-5" />}
             label="Image"
             onDragStart={onElementDragStart("image")}
@@ -71,19 +82,53 @@ const ElementLibrary: React.FC<ElementLibraryProps> = ({ onElementDragStart }) =
             onDragStart={onElementDragStart("spacer")}
           />
         </TabsContent>
-        
-        <TabsContent value="layout" className="p-4 space-y-2 flex-1 overflow-auto">
+
+        <TabsContent
+          value="layout"
+          className="p-4 space-y-2 flex-1 overflow-auto"
+        >
           <LibraryItem
             type="container"
             icon={<LayoutGrid className="h-5 w-5" />}
             label="Container"
             onDragStart={onElementDragStart("container")}
           />
-          {/* Add more layout elements as needed */}
+          <LibraryItem
+            type="two-column"
+            icon={<Columns className="h-5 w-5" />}
+            label="Two Columns"
+            onDragStart={onElementDragStart("two-column")}
+          />
+          <LibraryItem
+            type="three-column"
+            icon={<Grid3X3 className="h-5 w-5" />}
+            label="Three Columns"
+            onDragStart={onElementDragStart("three-column")}
+          />
+          <LibraryItem
+            type="card"
+            icon={<CreditCard className="h-5 w-5" />}
+            label="Card"
+            onDragStart={onElementDragStart("card")}
+          />
         </TabsContent>
-        
-        <TabsContent value="advanced" className="p-4 flex-1 overflow-auto">
-          <p className="text-sm text-muted-foreground">Coming soon...</p>
+
+        <TabsContent
+          value="advanced"
+          className="p-4 flex-1 overflow-auto space-y-2"
+        >
+          <LibraryItem
+            type="callout"
+            icon={<AlertCircle className="h-5 w-5" />}
+            label="Callout"
+            onDragStart={onElementDragStart("callout")}
+          />
+          <LibraryItem
+            type="social-icons"
+            icon={<Share2 className="h-5 w-5" />}
+            label="Social Icons"
+            onDragStart={onElementDragStart("social-icons")}
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -97,7 +142,12 @@ interface LibraryItemProps {
   onDragStart: (event: React.DragEvent) => void;
 }
 
-const LibraryItem: React.FC<LibraryItemProps> = ({ type, icon, label, onDragStart }) => {
+const LibraryItem: React.FC<LibraryItemProps> = ({
+  type,
+  icon,
+  label,
+  onDragStart,
+}) => {
   return (
     <div
       draggable

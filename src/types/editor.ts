@@ -1,12 +1,16 @@
-
-export type ElementType = 
-  | 'text' 
-  | 'heading' 
-  | 'image' 
-  | 'button' 
-  | 'divider'
-  | 'spacer'
-  | 'container';
+export type ElementType =
+  | "text"
+  | "heading"
+  | "image"
+  | "button"
+  | "divider"
+  | "spacer"
+  | "container"
+  | "two-column"
+  | "three-column"
+  | "card"
+  | "callout"
+  | "social-icons";
 
 export interface EmailElement {
   id: string;

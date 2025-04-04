@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 5713,
   },
   plugins: [
-    react(),
+    react(),  
   ],
   resolve: {
     alias: {

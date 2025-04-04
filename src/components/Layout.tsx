@@ -107,7 +107,7 @@ const Layout = ({ children }: LayoutProps) => {
           </SheetContent>
         </Sheet>
       ) : (
-        <div className="w-64 border-r border-border bg-card p-4 flex flex-col animate-fade-in">
+        <div className="w-48 border-r border-border bg-card p-4 flex flex-col animate-fade-in">
           <NavContent />
         </div>
       )}
