@@ -25,6 +25,11 @@ import {
   Palette,
   Pilcrow,
   ImageDown,
+  Edit3,
+  TextCursorInput,
+  PaintBucket,
+  Box,
+  Layout,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -137,9 +142,15 @@ const ElementToolbar: React.FC<ElementToolbarProps> = ({
       className="flex flex-wrap items-center p-2 bg-background/95 backdrop-blur-sm border rounded-md shadow-sm animate-fade-in gap-1.5 max-w-full overflow-x-auto toolbar-wrapper"
       style={{ minHeight: "44px" }}
     >
+      {/* Text formatting options for text elements */}
       {isTextElement && onTextFormatting && (
         <>
           <div className="flex space-x-0.5 flex-nowrap bg-muted/40 rounded-md p-0.5">
+            {renderToolbarButton(
+              <TextCursorInput className="h-4 w-4" />,
+              () => onTextFormatting("edit"),
+              "Edit Text"
+            )}
             {renderToolbarButton(
               <Bold className="h-4 w-4" />,
               () => onTextFormatting("bold"),
@@ -163,6 +174,7 @@ const ElementToolbar: React.FC<ElementToolbarProps> = ({
         </>
       )}
 
+      {/* Text alignment options for text elements */}
       {isTextElement && onAlignment && (
         <>
           <div className="flex space-x-0.5 flex-nowrap bg-muted/40 rounded-md p-0.5">
@@ -195,8 +207,10 @@ const ElementToolbar: React.FC<ElementToolbarProps> = ({
         </>
       )}
 
+      {/* Style options for all elements */}
       {onStyleChange && (
         <>
+          {/* Font styling for text elements */}
           {isTextElement && (
             <Popover>
               <PopoverTrigger asChild>
@@ -208,30 +222,85 @@ const ElementToolbar: React.FC<ElementToolbarProps> = ({
                   <Type className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-60 p-3 shadow-lg animate-in fade-in-50 zoom-in-95">
-                <div className="space-y-3">
-                  <h4 className="font-medium text-sm">Font Size</h4>
-                  <Select
-                    defaultValue={currentStyles["font-size"] || "16px"}
-                    onValueChange={(value) => onStyleChange("font-size", value)}
-                  >
-                    <SelectTrigger className="w-full h-9">
-                      <SelectValue placeholder="Select size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fontSizes.map((size) => (
-                        <SelectItem key={size} value={size}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <PopoverContent className="w-64 p-3 shadow-lg animate-in fade-in-50 zoom-in-95">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm border-b pb-1">
+                    Typography
+                  </h4>
+
+                  <div className="space-y-3">
+                    <h5 className="text-xs text-muted-foreground">
+                      Font Family
+                    </h5>
+                    <Select
+                      defaultValue={
+                        currentStyles["fontFamily"] || "Arial, sans-serif"
+                      }
+                      onValueChange={(value) =>
+                        onStyleChange("fontFamily", value)
+                      }
+                    >
+                      <SelectTrigger className="w-full h-9">
+                        <SelectValue placeholder="Select font" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fontFamilies.map((font) => (
+                          <SelectItem
+                            key={font}
+                            value={font}
+                            style={{ fontFamily: font }}
+                          >
+                            {font.split(",")[0]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h5 className="text-xs text-muted-foreground">Font Size</h5>
+                    <Select
+                      defaultValue={currentStyles["fontSize"] || "16px"}
+                      onValueChange={(value) =>
+                        onStyleChange("fontSize", value)
+                      }
+                    >
+                      <SelectTrigger className="w-full h-9">
+                        <SelectValue placeholder="Select size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fontSizes.map((size) => (
+                          <SelectItem key={size} value={size}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h5 className="text-xs text-muted-foreground">
+                      Text Color
+                    </h5>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="color"
+                        value={currentStyles["color"] || "#000000"}
+                        onChange={(e) => onStyleChange("color", e.target.value)}
+                        className="w-10 h-10 cursor-pointer border rounded-md"
+                      />
+                      <span className="text-xs font-mono">
+                        {currentStyles["color"] || "#000000"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
           )}
 
-          {isTextElement && (
+          {/* Background color picker for text and container elements */}
+          {(isTextElement || isContainer) && (
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -239,94 +308,106 @@ const ElementToolbar: React.FC<ElementToolbarProps> = ({
                   size="icon"
                   className="h-8 w-8 rounded-md transition-all duration-200 hover:bg-primary/10 hover:text-primary"
                 >
-                  <Pilcrow className="h-4 w-4" />
+                  <PaintBucket className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-60 p-3 shadow-lg animate-in fade-in-50 zoom-in-95">
-                <div className="space-y-3">
-                  <h4 className="font-medium text-sm">Font Family</h4>
-                  <Select
-                    defaultValue={
-                      currentStyles["font-family"] || "Arial, sans-serif"
-                    }
-                    onValueChange={(value) =>
-                      onStyleChange("font-family", value)
-                    }
-                  >
-                    <SelectTrigger className="w-full h-9">
-                      <SelectValue placeholder="Select font" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fontFamilies.map((font) => (
-                        <SelectItem
-                          key={font}
-                          value={font}
-                          style={{ fontFamily: font }}
-                        >
-                          {font.split(",")[0]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <PopoverContent className="w-64 p-3 shadow-lg animate-in fade-in-50 zoom-in-95">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm border-b pb-1">
+                    Background
+                  </h4>
+
+                  <div className="space-y-3">
+                    <h5 className="text-xs text-muted-foreground">
+                      Background Color
+                    </h5>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="color"
+                        value={currentStyles["backgroundColor"] || "#ffffff"}
+                        onChange={(e) =>
+                          onStyleChange("backgroundColor", e.target.value)
+                        }
+                        className="w-10 h-10 cursor-pointer border rounded-md"
+                      />
+                      <span className="text-xs font-mono">
+                        {currentStyles["backgroundColor"] || "#ffffff"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isContainer && (
+                    <div className="space-y-3">
+                      <h5 className="text-xs text-muted-foreground">
+                        Border Radius
+                      </h5>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="range"
+                          min="0"
+                          max="20"
+                          value={parseInt(currentStyles["borderRadius"] || "0")}
+                          onChange={(e) =>
+                            onStyleChange("borderRadius", `${e.target.value}px`)
+                          }
+                          className="w-full h-2"
+                        />
+                        <span className="text-xs w-12 text-right">
+                          {currentStyles["borderRadius"] || "0px"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {isContainer && (
+                    <div className="space-y-3">
+                      <h5 className="text-xs text-muted-foreground">Padding</h5>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="range"
+                          min="0"
+                          max="40"
+                          value={parseInt(
+                            (currentStyles["padding"] || "0").replace("px", "")
+                          )}
+                          onChange={(e) =>
+                            onStyleChange("padding", `${e.target.value}px`)
+                          }
+                          className="w-full h-2"
+                        />
+                        <span className="text-xs w-12 text-right">
+                          {currentStyles["padding"] || "0px"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </PopoverContent>
             </Popover>
           )}
 
-          {isTextElement && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="h-8 w-8 flex items-center justify-center rounded-md overflow-hidden">
-                  <Input
-                    type="color"
-                    value={currentStyles["color"] || "#000000"}
-                    onChange={(e) => onStyleChange("color", e.target.value)}
-                    className="w-8 h-8 cursor-pointer border-0 p-0 m-0"
-                    title="Text Color"
-                  />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="px-3 py-1.5">
-                <p className="text-xs font-medium">Text Color</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
+          {/* Image settings */}
           {isImage && (
-            <>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-md transition-all duration-200 hover:bg-primary/10 hover:text-primary"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect
-                        x="3"
-                        y="3"
-                        width="18"
-                        height="18"
-                        rx="2"
-                        ry="2"
-                      ></rect>
-                      <line x1="3" y1="9" x2="21" y2="9"></line>
-                    </svg>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-3 shadow-lg animate-in fade-in-50 zoom-in-95">
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm">Image Width</h4>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-md transition-all duration-200 hover:bg-primary/10 hover:text-primary"
+                >
+                  <ImageDown className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3 shadow-lg animate-in fade-in-50 zoom-in-95">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm border-b pb-1">
+                    Image Settings
+                  </h4>
+
+                  <div className="space-y-3">
+                    <h5 className="text-xs text-muted-foreground">
+                      Image Width
+                    </h5>
                     <Select
                       defaultValue={currentStyles["width"] || "auto"}
                       onValueChange={(value) => onStyleChange("width", value)}
@@ -342,8 +423,12 @@ const ElementToolbar: React.FC<ElementToolbarProps> = ({
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
 
-                    <h4 className="font-medium text-sm">Image Height</h4>
+                  <div className="space-y-3">
+                    <h5 className="text-xs text-muted-foreground">
+                      Image Height
+                    </h5>
                     <Select
                       defaultValue={currentStyles["height"] || "auto"}
                       onValueChange={(value) => onStyleChange("height", value)}
@@ -359,61 +444,38 @@ const ElementToolbar: React.FC<ElementToolbarProps> = ({
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
 
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm">Border Radius</h4>
-                      <div className="flex items-center gap-3">
-                        <Input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={parseInt(
-                            currentStyles["border-radius"] || "0"
-                          )}
-                          onChange={(e) =>
-                            onStyleChange(
-                              "border-radius",
-                              `${e.target.value}px`
-                            )
-                          }
-                          className="w-full h-2"
-                        />
-                        <span className="text-xs w-10 text-right">
-                          {currentStyles["border-radius"] || "0px"}
-                        </span>
-                      </div>
+                  <div className="space-y-2">
+                    <h5 className="text-xs text-muted-foreground">
+                      Border Radius
+                    </h5>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="range"
+                        min="0"
+                        max="50"
+                        value={parseInt(currentStyles["borderRadius"] || "0")}
+                        onChange={(e) =>
+                          onStyleChange("borderRadius", `${e.target.value}px`)
+                        }
+                        className="w-full h-2"
+                      />
+                      <span className="text-xs w-10 text-right">
+                        {currentStyles["borderRadius"] || "0px"}
+                      </span>
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
-            </>
-          )}
-
-          {(isTextElement || isContainer) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="h-8 w-8 flex items-center justify-center rounded-md overflow-hidden">
-                  <Input
-                    type="color"
-                    value={currentStyles["background-color"] || "#ffffff"}
-                    onChange={(e) =>
-                      onStyleChange("background-color", e.target.value)
-                    }
-                    className="w-8 h-8 cursor-pointer border-0 p-0 m-0"
-                    title="Background Color"
-                  />
                 </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="px-3 py-1.5">
-                <p className="text-xs font-medium">Background Color</p>
-              </TooltipContent>
-            </Tooltip>
+              </PopoverContent>
+            </Popover>
           )}
 
           <Separator orientation="vertical" className="mx-1 h-8 opacity-30" />
         </>
       )}
 
+      {/* Element manipulation controls */}
       <div className="flex space-x-0.5 flex-nowrap bg-muted/40 rounded-md p-0.5">
         {renderToolbarButton(
           <MoveUp className="h-4 w-4" />,

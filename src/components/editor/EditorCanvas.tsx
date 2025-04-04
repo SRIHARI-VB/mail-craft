@@ -30,6 +30,7 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
     number | null
   >(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   // Add state for tooltip display
@@ -141,87 +142,87 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
     switch (type) {
       case "heading":
         return {
-          "font-size": "24px",
-          "font-weight": "bold",
+          fontSize: "24px",
+          fontWeight: "bold",
           color: "#333333",
           padding: "10px 0",
-          "font-family": "Arial, sans-serif",
+          fontFamily: "Arial, sans-serif",
         };
       case "text":
         return {
-          "font-size": "16px",
+          fontSize: "16px",
           color: "#666666",
-          "line-height": "1.5",
+          lineHeight: "1.5",
           padding: "10px 0",
-          "font-family": "Arial, sans-serif",
+          fontFamily: "Arial, sans-serif",
         };
       case "button":
         return {
-          "background-color": "#3b82f6",
+          backgroundColor: "#3b82f6",
           color: "#ffffff",
           padding: "10px 20px",
-          "border-radius": "4px",
+          borderRadius: "4px",
           display: "inline-block",
           cursor: "pointer",
-          "font-family": "Arial, sans-serif",
-          "font-size": "16px",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "16px",
         };
       case "divider":
         return {
-          "border-top": "1px solid #e5e7eb",
+          borderTop: "1px solid #e5e7eb",
           margin: "20px 0",
         };
       case "spacer":
         return { height: "30px" };
       case "image":
         return {
-          "max-width": "100%",
+          maxWidth: "100%",
           height: "auto",
-          "border-radius": "0px",
+          borderRadius: "0px",
         };
       case "container":
         return {
           padding: "20px",
-          "background-color": "#f8f9fa",
-          "border-radius": "8px",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "8px",
           width: "100%",
         };
       case "two-column":
         return {
           display: "flex",
-          "flex-wrap": "wrap",
+          flexWrap: "wrap",
           gap: "20px",
           width: "100%",
         };
       case "three-column":
         return {
           display: "flex",
-          "flex-wrap": "wrap",
+          flexWrap: "wrap",
           gap: "15px",
           width: "100%",
         };
       case "card":
         return {
           padding: "20px",
-          "background-color": "#ffffff",
+          backgroundColor: "#ffffff",
           border: "1px solid #e5e7eb",
-          "border-radius": "8px",
-          "box-shadow": "0 2px 4px rgba(0, 0, 0, 0.05)",
+          borderRadius: "8px",
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
         };
       case "callout":
         return {
           padding: "15px",
-          "background-color": "#f0f9ff",
-          "border-left": "4px solid #3b82f6",
+          backgroundColor: "#f0f9ff",
+          borderLeft: "4px solid #3b82f6",
           color: "#1e3a8a",
-          "font-size": "16px",
-          "font-family": "Arial, sans-serif",
+          fontSize: "16px",
+          fontFamily: "Arial, sans-serif",
         };
       case "social-icons":
         return {
           display: "flex",
           gap: "10px",
-          "justify-content": "center",
+          justifyContent: "center",
           padding: "10px 0",
         };
       default:
@@ -711,6 +712,9 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                   ? "none"
                   : "underline";
               break;
+            case "edit":
+              // This will be handled separately
+              return el;
           }
 
           return {
@@ -730,6 +734,12 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
         return el;
       });
     };
+
+    // Special case for edit action
+    if (format === "edit") {
+      startEditingText(id);
+      return;
+    }
 
     const newElements = updateElementFormatting(elements);
     onUpdateElements(newElements);
@@ -779,16 +789,29 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
   };
 
   const handleTextChange = (id: string, value: string) => {
-    const newElements = elements.map((el) => {
-      if (el.id === id) {
-        return {
-          ...el,
-          content: value,
-        };
-      }
-      return el;
-    });
+    // Helper function to update text content recursively
+    const updateElementText = (elements: EmailElement[]): EmailElement[] => {
+      return elements.map((el) => {
+        if (el.id === id) {
+          return {
+            ...el,
+            content: value,
+          };
+        }
 
+        // Check children if this element has any
+        if (el.children && el.children.length > 0) {
+          return {
+            ...el,
+            children: updateElementText(el.children),
+          };
+        }
+
+        return el;
+      });
+    };
+
+    const newElements = updateElementText(elements);
     onUpdateElements(newElements);
   };
 
@@ -2008,7 +2031,7 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
           ) : (
             <h2
               {...elementProps}
-              className="cursor-text"
+              className="cursor-text relative"
               onDoubleClick={() => startEditingText(element.id)}
             >
               {element.content}
@@ -2042,7 +2065,7 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
         elementContent =
           isSelected && editingText === element.id ? (
             <input
-              ref={textInputRef as any}
+              ref={inputRef}
               className="w-full bg-transparent border-none focus:outline-none text-center"
               value={element.content}
               onChange={(e) => handleTextChange(element.id, e.target.value)}
@@ -2151,7 +2174,11 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                   </div>
                 </div>
               )}
-              {element.children?.map((child) => renderElement(child))}
+              {element.children?.map((child) => (
+                <React.Fragment key={child.id}>
+                  {renderElement(child)}
+                </React.Fragment>
+              ))}
             </div>
           </div>
         );
@@ -2215,7 +2242,11 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                 )}
                 {element.children
                   ?.filter((_, i) => i % 2 === 0)
-                  .map((child) => renderElement(child))}
+                  .map((child) => (
+                    <React.Fragment key={child.id}>
+                      {renderElement(child)}
+                    </React.Fragment>
+                  ))}
               </div>
               <div
                 className={cn(
@@ -2260,7 +2291,11 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                 )}
                 {element.children
                   ?.filter((_, i) => i % 2 === 1)
-                  .map((child) => renderElement(child))}
+                  .map((child) => (
+                    <React.Fragment key={child.id}>
+                      {renderElement(child)}
+                    </React.Fragment>
+                  ))}
               </div>
             </div>
           </div>
@@ -2325,7 +2360,11 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                 )}
                 {element.children
                   ?.filter((_, i) => i % 3 === 0)
-                  .map((child) => renderElement(child))}
+                  .map((child) => (
+                    <React.Fragment key={child.id}>
+                      {renderElement(child)}
+                    </React.Fragment>
+                  ))}
               </div>
               <div
                 className={cn(
@@ -2370,7 +2409,11 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                 )}
                 {element.children
                   ?.filter((_, i) => i % 3 === 1)
-                  .map((child) => renderElement(child))}
+                  .map((child) => (
+                    <React.Fragment key={child.id}>
+                      {renderElement(child)}
+                    </React.Fragment>
+                  ))}
               </div>
               <div
                 className={cn(
@@ -2415,7 +2458,11 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                 )}
                 {element.children
                   ?.filter((_, i) => i % 3 === 2)
-                  .map((child) => renderElement(child))}
+                  .map((child) => (
+                    <React.Fragment key={child.id}>
+                      {renderElement(child)}
+                    </React.Fragment>
+                  ))}
               </div>
             </div>
           </div>
@@ -2448,7 +2495,11 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                   Drop elements here
                 </div>
               )}
-              {element.children?.map((child) => renderElement(child))}
+              {element.children.map((childElement) => (
+                <React.Fragment key={childElement.id}>
+                  {renderElement(childElement)}
+                </React.Fragment>
+              ))}
             </div>
           </div>
         );
@@ -2606,285 +2657,26 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
             </div>
           )}
 
-          {/* Show element toolbar when selected */}
+          {/* Show the custom element toolbar when selected */}
           {isSelected && (
-            <div className="element-toolbar">
-              <button
-                className="toolbar-button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteElement(element.id);
-                }}
-                title="Delete"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 6h18"></path>
-                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
-              </button>
-              <button
-                className="toolbar-button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDuplicateElement(element.id);
-                }}
-                title="Duplicate"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="8" y="8" width="12" height="12" rx="2" ry="2"></rect>
-                  <path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"></path>
-                </svg>
-              </button>
-              {element.type === "text" && (
-                <>
-                  <button
-                    className="toolbar-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTextFormatting(element.id, "bold");
-                    }}
-                    title="Bold"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"></path>
-                      <path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"></path>
-                    </svg>
-                  </button>
-                  <button
-                    className="toolbar-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTextFormatting(element.id, "italic");
-                    }}
-                    title="Italic"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <line x1="19" y1="4" x2="10" y2="4"></line>
-                      <line x1="14" y1="20" x2="5" y2="20"></line>
-                      <line x1="15" y1="4" x2="9" y2="20"></line>
-                    </svg>
-                  </button>
-                  <button
-                    className="toolbar-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startEditingText(element.id);
-                    }}
-                    title="Edit text"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                  </button>
-                  <button
-                    className="toolbar-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAlignment(element.id, "left");
-                    }}
-                    title="Align left"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <line x1="17" y1="10" x2="3" y2="10"></line>
-                      <line x1="21" y1="6" x2="3" y2="6"></line>
-                      <line x1="21" y1="14" x2="3" y2="14"></line>
-                      <line x1="17" y1="18" x2="3" y2="18"></line>
-                    </svg>
-                  </button>
-                  <button
-                    className="toolbar-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAlignment(element.id, "center");
-                    }}
-                    title="Align center"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <line x1="18" y1="10" x2="6" y2="10"></line>
-                      <line x1="21" y1="6" x2="3" y2="6"></line>
-                      <line x1="21" y1="14" x2="3" y2="14"></line>
-                      <line x1="18" y1="18" x2="6" y2="18"></line>
-                    </svg>
-                  </button>
-                  <button
-                    className="toolbar-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAlignment(element.id, "right");
-                    }}
-                    title="Align right"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <line x1="21" y1="10" x2="7" y2="10"></line>
-                      <line x1="21" y1="6" x2="3" y2="6"></line>
-                      <line x1="21" y1="14" x2="3" y2="14"></line>
-                      <line x1="21" y1="18" x2="7" y2="18"></line>
-                    </svg>
-                  </button>
-                </>
-              )}
-              {element.type === "image" && (
-                <button
-                  className="toolbar-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleImageUpload(element.id);
-                  }}
-                  title="Change image"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect
-                      x="3"
-                      y="3"
-                      width="18"
-                      height="18"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                  </svg>
-                </button>
-              )}
-              <button
-                className="toolbar-button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMoveElement(element.id, "up");
-                }}
-                title="Move up"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="19" x2="12" y2="5"></line>
-                  <polyline points="5 12 12 5 19 12"></polyline>
-                </svg>
-              </button>
-              <button
-                className="toolbar-button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMoveElement(element.id, "down");
-                }}
-                title="Move down"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <polyline points="19 12 12 19 5 12"></polyline>
-                </svg>
-              </button>
+            <div className="absolute -bottom-14 left-0 w-full z-10">
+              <ElementToolbar
+                elementType={element.type}
+                onDelete={() => handleDeleteElement(element.id)}
+                onDuplicate={() => handleDuplicateElement(element.id)}
+                onMoveUp={() => handleMoveElement(element.id, "up")}
+                onMoveDown={() => handleMoveElement(element.id, "down")}
+                onTextFormatting={(format) =>
+                  handleTextFormatting(element.id, format)
+                }
+                onAlignment={(alignment) =>
+                  handleAlignment(element.id, alignment)
+                }
+                onStyleChange={(property, value) =>
+                  handleStyleChange(element.id, property, value)
+                }
+                currentStyles={element.style}
+              />
             </div>
           )}
         </div>
@@ -3026,7 +2818,7 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
               );
 
               if (childIndex !== -1) {
-                // Found as a direct child, remove it
+                // Found as direct child, remove it
                 const newChildren = [...el.children];
                 newChildren.splice(childIndex, 1);
                 return { ...el, children: newChildren };
