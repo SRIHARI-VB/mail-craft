@@ -2495,7 +2495,7 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
                   Drop elements here
                 </div>
               )}
-              {element.children.map((childElement) => (
+              {element.children?.map((childElement) => (
                 <React.Fragment key={childElement.id}>
                   {renderElement(childElement)}
                 </React.Fragment>
